@@ -1,0 +1,21 @@
+# Folder Virtual Environment
+/venv
+/env
+
+# Folder konfigurasi IDE
+/.idea
+/.vscode
+
+# File cache Python
+__pycache__/
+*.pyc
+
+# File lain yang tidak perlu
+*.log
+.DS_Store
+
+#folder debug
+/debug
+
+#folder model
+/models_store
