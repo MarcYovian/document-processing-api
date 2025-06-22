@@ -21,6 +21,8 @@ if settings.DEBUG_FILE:  # Menggunakan settings yang diimpor
     os.makedirs(settings.DEBUG_FILE, exist_ok=True)
 
 ocr_processor = OCRService(tesseract_cmd_path=settings.TESSERACT_PATH)
+bert_classify_service = BERTClassifyService()
+bert_ner_service = BERTNERService()
 
 
 def allowed_file(filename):
@@ -83,15 +85,15 @@ def ocr_endpoint():
                 }
             }), 200
     except Exception as e:
-        print(f"Error tak terduga di endpoint /ocr: {str(e)}")
+        logging.error(f"Error tak terduga di endpoint /ocr: {str(e)}")
         return jsonify({"error": f"Terjadi kesalahan internal server: {str(e)}"}), 500
     finally:
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
-                print(f"File '{file_path}' berhasil dihapus (cleanup).")
+                logging.info(f"File '{file_path}' berhasil dihapus (cleanup).")
             except OSError as e_remove:
-                print(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")
+                logging.error(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")
 
 
 @app.route('/documents/classify', methods=['POST'])
@@ -104,8 +106,6 @@ def classify_endpoint():
     file_path, error = save_uploaded_file(file)
 
     try:
-        bert_classify_service = BERTClassifyService()
-
         extracted_text = ocr_processor.extract_text(file_path)  # Memanggil service
         predict = bert_classify_service.classify_text(extracted_text)
 
@@ -127,15 +127,15 @@ def classify_endpoint():
                 }
             }), 200
     except Exception as e:
-        print(f"Error tak terduga di endpoint /classify: {str(e)}")
+        logging.error(f"Error tak terduga di endpoint /classify: {str(e)}")
         return jsonify({"error": f"Terjadi kesalahan internal server: {str(e)}"}), 500
     finally:
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
-                print(f"File '{file_path}' berhasil dihapus (cleanup).")
+                logging.info(f"File '{file_path}' berhasil dihapus (cleanup).")
             except OSError as e_remove:
-                print(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")
+                logging.error(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")
 
 
 @app.route('/documents/classify-extract', methods=['POST'])
@@ -148,9 +148,6 @@ def classify_extract_endpoint():
     file_path, error = save_uploaded_file(file)
 
     try:
-        bert_classify_service = BERTClassifyService()
-        bert_ner_service = BERTNERService()
-
         extracted_text = ocr_processor.extract_text(file_path)  # Memanggil service
         predict = bert_classify_service.classify_text(extracted_text)
         extract = bert_ner_service.extract_text(extracted_text)
@@ -178,12 +175,12 @@ def classify_extract_endpoint():
                 "data": data
             }), 200
     except Exception as e:
-        print(f"Error tak terduga di endpoint /classify-extract: {str(e)}")
+        logging.error(f"Error tak terduga di endpoint /classify-extract: {str(e)}")
         return jsonify({"error": f"Terjadi kesalahan internal server: {str(e)}"}), 500
     finally:
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
-                print(f"File '{file_path}' berhasil dihapus (cleanup).")
+                logging.info(f"File '{file_path}' berhasil dihapus (cleanup).")
             except OSError as e_remove:
-                print(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")
+                logging.error(f"Gagal menghapus file '{file_path}' saat cleanup: {e_remove}")

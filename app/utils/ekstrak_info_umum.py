@@ -1,4 +1,4 @@
-import pprint
+import logging
 import re
 
 import pandas as pd
@@ -29,17 +29,17 @@ def ekstrak_info_umum(entities_input_list):
             if 'start' in entities_input_list.columns:
                 entities_sorted = entities_input_list.sort_values(by='start').to_dict(orient='records')
             else:
-                print("Peringatan: DataFrame (info umum) tidak memiliki kolom 'start'. Memproses apa adanya.")
+                logging.info("Peringatan: DataFrame (info umum) tidak memiliki kolom 'start'. Memproses apa adanya.")
                 entities_sorted = entities_input_list.to_dict(orient='records')
         else:
             # Jika bukan list of dict atau DataFrame, coba iterasi langsung
             # Ini mungkin perlu penyesuaian lebih lanjut tergantung tipe data sebenarnya
-            print(
+            logging.info(
                 "Peringatan: Format input entities_input_list (info umum) tidak dikenal untuk pengurutan. Memproses "
                 "apa adanya.")
             entities_sorted = list(entities_input_list)
     except Exception as e:
-        print(f"Error saat persiapan entitas di ekstrak_info_umum: {e}. Menggunakan input list apa adanya.")
+        logging.error(f"Error saat persiapan entitas di ekstrak_info_umum: {e}. Menggunakan input list apa adanya.")
         entities_sorted = list(entities_input_list)
 
     # Kumpulan entitas yang sudah diproses untuk info umum (indeksnya)

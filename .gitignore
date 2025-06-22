@@ -2,6 +2,9 @@
 /venv
 /env
 
+# File Environment
+.env
+
 # Folder konfigurasi IDE
 /.idea
 /.vscode

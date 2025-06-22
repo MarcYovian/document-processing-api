@@ -1,3 +1,4 @@
+import logging
 import re
 import pandas as pd
 
@@ -38,7 +39,7 @@ def basic_post_process_entities(raw_predictions_list):
     # Ini memerlukan iterasi dan lebih baik dilakukan pada list of dicts
     processed_entities = []
     if 'start' not in df.columns:
-        print("Peringatan: DataFrame tidak memiliki kolom 'start'. Penggabungan DOCNUM mungkin tidak akurat.")
+        logging.info("Peringatan: DataFrame tidak memiliki kolom 'start'. Penggabungan DOCNUM mungkin tidak akurat.")
         # Kembalikan DataFrame yang sudah diproses sebagian jika tidak ada 'start'
         return df.to_dict(orient='records')
 

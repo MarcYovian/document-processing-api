@@ -1,7 +1,7 @@
+import logging
 import re
 
 import pandas as pd
-import pprint
 
 from app.utils.similar import similar
 
@@ -45,14 +45,14 @@ def ekstrak_detail_kegiatan_v4(entities):
     # Ini krusial untuk logika proximity dan urutan
     if isinstance(entities, pd.DataFrame):
         if 'start' not in entities.columns:
-            print("Peringatan: DataFrame untuk kegiatan tidak memiliki kolom 'start'. Hasil mungkin tidak akurat.")
+            logging.info("Peringatan: DataFrame untuk kegiatan tidak memiliki kolom 'start'. Hasil mungkin tidak akurat.")
             # Anda bisa mencoba mengembalikan list kosong atau memproses tanpa urutan (tidak disarankan)
             return []
         entities_sorted = entities.sort_values(by='start').to_dict(orient='records')
     elif isinstance(entities, list) and entities and isinstance(entities[0], dict) and 'start' in entities[0]:
         entities_sorted = sorted(entities, key=lambda x: x.get('start', 0))
     else:
-        print("Format input 'entities' untuk kegiatan tidak valid atau tidak memiliki 'start'.")
+        logging.error("Format input 'entities' untuk kegiatan tidak valid atau tidak memiliki 'start'.")
         return []
 
     current_event = None

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from transformers import pipeline
@@ -16,10 +17,10 @@ class BERTNERService:
                 aggregation_strategy="first"
             )
 
-            print(f"Model BERT '{settings.NER_MODEL}' berhasil dimuat.")
+            logging.info(f"Model BERT '{settings.NER_MODEL}' berhasil dimuat.")
         except Exception as e:
-            print(f"Error saat memuat model BERT: {e}")
-            self.classifier = None
+            logging.error(f"Error saat memuat model BERT: {e}")
+            self.ner_pipeline = None
 
     def extract_text(self, text: str):
         if not self.ner_pipeline:

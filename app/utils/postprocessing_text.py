@@ -81,7 +81,6 @@ def preprocess_text(text):
 
         # 5. Hapus whitespace berlebih
         text = ' '.join(text.split())
-        print(text)
         return text.strip()
 
     except Exception as e:

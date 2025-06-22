@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 from core.config import settings
@@ -9,7 +10,7 @@ def remove_elements_by_contour(binary_image, gray_image_to_clean, id_numerik=Non
     """
     [DIPERBAIKI] Menghapus elemen besar dengan filter LUAS dan RASIO ASPEK.
     """
-    print("--- Memulai penghapusan elemen berdasarkan analisis kontur ---")
+    logging.info("--- Memulai penghapusan elemen berdasarkan analisis kontur ---")
 
     cleaned_image = gray_image_to_clean.copy()
     folder_target = None
@@ -24,7 +25,7 @@ def remove_elements_by_contour(binary_image, gray_image_to_clean, id_numerik=Non
 
     # Terapkan erosi.
     eroded_image = cv2.erode(inverted_binary, vertical_kernel, iterations=1)
-    print("Menerapkan erosi morfologis untuk memisahkan baris teks.")
+    logging.info("Menerapkan erosi morfologis untuk memisahkan baris teks.")
     if folder_target:
         cv2.imwrite(os.path.join(folder_target, "debug_3b_eroded_image.png"), eroded_image)
     # =================================================================================
@@ -32,7 +33,7 @@ def remove_elements_by_contour(binary_image, gray_image_to_clean, id_numerik=Non
     # 2. Cari kontur pada gambar yang SUDAH DIEROSI
     # Ini adalah perubahan kunci. Kita tidak lagi mencari pada inverted_binary asli.
     contours, _ = cv2.findContours(eroded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    print(f"Total kontur terdeteksi setelah erosi: {len(contours)}")
+    logging.info(f"Total kontur terdeteksi setelah erosi: {len(contours)}")
 
     # 3. Tentukan nilai ambang (threshold)
     MIN_CONTOUR_AREA = 1500
@@ -52,7 +53,7 @@ def remove_elements_by_contour(binary_image, gray_image_to_clean, id_numerik=Non
                 # PENTING: Kita tetap menggambar kontur asli, bukan kontur yang sudah terkikis.
                 cv2.drawContours(cleaned_image, [contour], -1, (255), thickness=cv2.FILLED)
 
-    print(f"Total kontur dihapus (dianggap ttd/stempel): {removed_count}")
+    logging.info(f"Total kontur dihapus (dianggap ttd/stempel): {removed_count}")
     if folder_target:
         cv2.imwrite(os.path.join(folder_target, "debug_4b_cleaned_grayscale.png"), cleaned_image)
 
@@ -91,9 +92,9 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
     if not os.path.exists(folder_target):
         os.makedirs(folder_target)
 
-    print(f"Memulai pra-pemrosesan untuk Halaman {page_number + 1} (ID: {id_numerik})...")
+    logging.info(f"Memulai pra-pemrosesan untuk Halaman {page_number + 1} (ID: {id_numerik})...")
     if image_data is None:
-        print("Error: Tidak ada data gambar untuk diproses.")
+        logging.error("Error: Tidak ada data gambar untuk diproses.")
         return None, None  # Kembalikan juga None untuk gambar grayscale asli
 
     # Pastikan gambar dalam format 3 channel jika berwarna, atau konversi ke gray
@@ -106,9 +107,9 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
     cv2.imwrite(os.path.join(folder_target, "debug_0a_original_for_crop.png"), original_bgr_for_cropping)
 
     original_height, original_width = image_data.shape[:2]
-    print(f"Dimensi Halaman {page_number + 1} (T x L): {original_height} x {original_width} piksel.")
+    logging.info(f"Dimensi Halaman {page_number + 1} (T x L): {original_height} x {original_width} piksel.")
 
-    print(f"--- Menerapkan Penghapusan Tanda Tangan Berwarna untuk Halaman {page_number + 1} ---")
+    logging.info(f"--- Menerapkan Penghapusan Tanda Tangan Berwarna untuk Halaman {page_number + 1} ---")
 
     gray = cv2.cvtColor(image_data, cv2.COLOR_BGR2GRAY)
     cv2.imwrite(os.path.join(folder_target, "debug_0b_grayscale_initial.png"), gray)
@@ -118,7 +119,7 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
         # Pastikan koordinat logo sesuai dengan dimensi gambar
         # Kita akan bekerja pada gambar 'gray' sebelum diubah ukurannya atau di-deskew secara signifikan
         # Jika Anda melakukan scaling di awal, sesuaikan koordinat logo ini atau lakukan scaling koordinat.
-        print(f"--- Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
+        logging.info(f"--- Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
 
         # Cek dan Mask Logo Kiri
         y0_L, y1_L, x0_L, x1_L = settings.LEFT_LOGO_BOX
@@ -137,16 +138,16 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
             right_logo_region = gray[y0_R:y1_R, x0_R:x1_R]
             if likely_contains_content(right_logo_region, std_dev_threshold=std_dev_threshold_logo):
                 gray[y0_R:y1_R, x0_R:x1_R] = 255  # Jadikan putih (latar belakang)
-                print(f"Konten terdeteksi di area logo kanan [{y0_R}:{y1_R}, {x0_R}:{x1_R}] dan di-mask.")
+                logging.info(f"Konten terdeteksi di area logo kanan [{y0_R}:{y1_R}, {x0_R}:{x1_R}] dan di-mask.")
             else:
-                print(f"Tidak ada konten signifikan terdeteksi di area logo kanan.")
+                logging.info(f"Tidak ada konten signifikan terdeteksi di area logo kanan.")
         else:
-            print(f"Koordinat logo kanan di luar batas gambar.")
+            logging.info(f"Koordinat logo kanan di luar batas gambar.")
 
         # (Opsional) Simpan gambar setelah masking logo untuk debugging
         cv2.imwrite(os.path.join(folder_target, "debug_0b_after_logo_masking.png"), gray)
     else:
-        print(f"--- Tidak Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
+        logging.info(f"--- Tidak Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
 
     # Deskew (meluruskan kemiringan)
     deskewed_gray = gray.copy()
@@ -178,7 +179,7 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
         _, initial_binary_image = cv2.threshold(gray_to_binarize, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         cv2.imwrite(os.path.join(folder_target, "debug_2a_binary_initial.png"), initial_binary_image)
     except Exception as e:
-        print(f"Error saat binarisasi awal: {e}")
+        logging.error(f"Error saat binarisasi awal: {e}")
         return None, None
 
     cleaned_gray = remove_elements_by_contour(initial_binary_image, gray, id_numerik=id_numerik,
@@ -188,7 +189,7 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
         _, binary_image = cv2.threshold(cleaned_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         cv2.imwrite(os.path.join(folder_target, "debug_2_binary_for_ocr.png"), binary_image)
     except Exception as e:
-        print(f"Error saat binarisasi: {e}")
+        logging.error(f"Error saat binarisasi: {e}")
         return None, None
 
     return binary_image, original_bgr_for_cropping

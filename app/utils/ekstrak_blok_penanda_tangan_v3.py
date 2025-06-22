@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 
 
@@ -23,13 +25,13 @@ def ekstrak_blok_penanda_tangan_v3(entities_input_list):  # Ganti nama fungsi ji
             if 'start' in entities_input_list.columns:
                 entities_sorted = entities_input_list.sort_values(by='start').to_dict(orient='records')
             else:
-                print("Peringatan: DataFrame (blok ttd) tidak memiliki kolom 'start'.")
+                logging.info("Peringatan: DataFrame (blok ttd) tidak memiliki kolom 'start'.")
                 entities_sorted = entities_input_list.to_dict(orient='records')
         else:
-            print("Peringatan: Format input (blok ttd) tidak dikenal untuk pengurutan.")
+            logging.info("Peringatan: Format input (blok ttd) tidak dikenal untuk pengurutan.")
             entities_sorted = list(entities_input_list)
     except Exception as e:
-        print(f"Error saat persiapan entitas di ekstrak_blok_penanda_tangan: {e}.")
+        logging.error(f"Error saat persiapan entitas di ekstrak_blok_penanda_tangan: {e}.")
         entities_sorted = list(entities_input_list)
 
     indices_terpakai_untuk_ttd = set()
