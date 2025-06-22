@@ -3,7 +3,7 @@
 /env
 
 # File Environment
-.env
+/.env
 
 # Folder konfigurasi IDE
 /.idea

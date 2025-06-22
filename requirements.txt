@@ -13,7 +13,7 @@ pdf2image==1.17.0
 pyspellchecker==0.8.2
 transformers==4.52.3
 tensorflow==2.19.0
-tf-keras=2.19.0
+tf-keras~=2.19.0
 Unidecode~=1.4.0
 opencv-python~=4.11.0.86
 numpy~=2.1.3
