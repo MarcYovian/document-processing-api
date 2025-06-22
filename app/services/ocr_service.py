@@ -64,7 +64,11 @@ class OCRService:
         if file_extension == ".pdf":
             logging.info("File PDF terdeteksi. Mengonversi PDF ke gambar...")
             try:
-                images_from_pdf = convert_from_path(file_path, dpi=300)
+                images_from_pdf = convert_from_path(
+                    file_path,
+                    dpi=300,
+                    poppler_path=settings.POPPLER_PATH
+                )
                 if not images_from_pdf:
                     return "Gagal mengonversi PDF (tidak ada halaman)."
             except Exception as e:
