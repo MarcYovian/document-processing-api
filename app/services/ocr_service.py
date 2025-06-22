@@ -16,8 +16,7 @@ from app.utils.postprocessing_text import preprocess_text
 class OCRService:
     def __init__(self, tesseract_cmd_path=None):
         if tesseract_cmd_path:
-            if os.name == "nt":
-                pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
 
     @staticmethod
     def ocr_core(image_data, lang='ind', psm=4, oem=3, whitelist=''):
