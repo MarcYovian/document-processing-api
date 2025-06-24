@@ -21,6 +21,7 @@ if settings.DEBUG_FILE:  # Menggunakan settings yang diimpor
     os.makedirs(settings.DEBUG_FILE, exist_ok=True)
 
 ocr_processor = OCRService(tesseract_cmd_path=settings.TESSERACT_PATH)
+logging.info(settings.TESSERACT_PATH)
 bert_classify_service = BERTClassifyService()
 bert_ner_service = BERTNERService()
 
