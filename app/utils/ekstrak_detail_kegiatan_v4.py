@@ -1,4 +1,5 @@
 import logging
+import pprint
 import re
 
 import pandas as pd
@@ -17,6 +18,7 @@ def initialize_event_dict_v4():
         "kontak_pj": [],
         "barang_dipinjam": [],
         "jumlah_peserta": [],
+        "susunan_acara": [],
         "catatan_tambahan": [],
         "_last_entity_end": -1,  # Untuk melacak posisi akhir entitas terakhir yang ditambahkan
         "_has_key_details": False  # Untuk menandai jika event sudah punya detail kunci (tanggal/lokasi)
@@ -54,6 +56,8 @@ def ekstrak_detail_kegiatan_v4(entities):
     else:
         logging.error("Format input 'entities' untuk kegiatan tidak valid atau tidak memiliki 'start'.")
         return []
+
+    pprint.pprint(entities_sorted)
 
     current_event = None
     MAX_ENTITY_GAP = 150  # Jarak karakter maksimal antar entitas dalam satu blok kegiatan (bisa disesuaikan)
@@ -144,6 +148,9 @@ def ekstrak_detail_kegiatan_v4(entities):
         elif group == 'PHONE':
             current_event["kontak_pj"].append(word)
             added_to_current_event = True
+        elif group == 'SCHEDULE_ITEM':
+            current_event["susunan_acara"].append(word)
+            added_to_current_event = True
         elif group == 'ITEM':
             jumlah_item = 1
             if i + 1 < len(entities_sorted) and entities_sorted[i + 1].get('entity_group') == 'ITEMQTY':
@@ -180,33 +187,34 @@ def ekstrak_detail_kegiatan_v4(entities):
             if key.startswith("_"):  # Hapus field internal
                 del keg[key]
                 continue
-            if key == "barang_dipinjam": continue
 
-            if key == "lokasi_kegiatan":
-
-                all_locations = keg.get(key, [])
-
-                if not all_locations:
-                    keg[key] = ""  # Jika kosong, jadikan string kosong
-
-                    continue
-
-                # Cari lokasi dengan nama terpanjang (paling detail)
-
-                best_location_name = ""
-
-                for loc_dict in all_locations:
-
-                    current_name = loc_dict.get("name", "")
-
-                    if len(current_name) > len(best_location_name):
-                        best_location_name = current_name
-
-                # Set nilainya menjadi satu string tunggal
-
-                keg[key] = best_location_name
-
+            if key in ["barang_dipinjam", "lokasi_kegiatan"]:
+                # Logika khusus untuk lokasi_kegiatan
+                if key == "lokasi_kegiatan":
+                    all_locations = keg.get(key, [])
+                    if not all_locations:
+                        keg[key] = ""
+                        continue
+                    best_location_name = ""
+                    for loc_dict in all_locations:
+                        current_name = loc_dict.get("name", "")
+                        if len(current_name) > len(best_location_name):
+                            best_location_name = current_name
+                    keg[key] = best_location_name
                 continue
+
+            if key == "susunan_acara":
+                str_val_list = [str(val).strip() for val in keg[key] if str(val).strip()]
+                unique_ordered_list = []
+                if str_val_list:
+                    seen_vals = set()
+                    for item_val in str_val_list:
+                        if item_val not in seen_vals:
+                            unique_ordered_list.append(item_val)
+                            seen_vals.add(item_val)
+                # Simpan sebagai list (array), bukan string
+                keg[key] = unique_ordered_list
+                continue  # Lanjut ke key berikutnya
 
             if isinstance(keg[key], list):
                 str_val_list = [str(val).strip() for val in keg[key] if str(val).strip()]
@@ -220,7 +228,7 @@ def ekstrak_detail_kegiatan_v4(entities):
                 keg[key] = "; ".join(unique_ordered_list)
 
             if not keg.get(key) and key in ["penanggung_jawab", "kontak_pj", "jumlah_peserta",
-                                            "deskripsi_tambahan_kegiatan", "catatan_tambahan"]:
+                                            "deskripsi_tambahan_kegiatan", "catatan_tambahan", "susunan_acara"]:
                 keg[key] = ""  # Atau "Tidak disebutkan" jika lebih disukai
 
     return [keg for keg in daftar_kegiatan if keg.get("nama_kegiatan_utama")]

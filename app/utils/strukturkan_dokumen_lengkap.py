@@ -33,7 +33,7 @@ def strukturkan_dokumen_lengkap(ner_pipeline_output_list, file_name_asli, teks_d
     info_umum, entitas_setelah_info_umum = ekstrak_info_umum(entities_processed_basic)
 
     # 2. Ekstrak Blok Penanda Tangan dari entitas_setelah_info_umum
-    sisa_entitas_setelah_ttd, blok_penanda_tangan = ekstrak_blok_penanda_tangan_v3(entitas_setelah_info_umum)
+    blok_penanda_tangan, sisa_entitas_setelah_ttd = ekstrak_blok_penanda_tangan_v3(entitas_setelah_info_umum)
 
     # 3. Ekstrak Detail Kegiatan dari sisa_entitas_setelah_ttd
     detail_kegiatan = ekstrak_detail_kegiatan_v4(sisa_entitas_setelah_ttd)

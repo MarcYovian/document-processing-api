@@ -27,9 +27,13 @@ def basic_post_process_entities(raw_predictions_list):
             clean_peoqty)
 
     def normalize_email(text):
-        if isinstance(text, str) and "@" not in text and "gmail.com" not in text:  # Heuristik sederhana
-            return f"{text}@gmail.com"  # Asumsi default, perlu disesuaikan
-        return text
+        if not isinstance(text, str):
+            return text
+
+        cleaned_text = text.replace(' ', '')
+        if "@" not in cleaned_text and "gmail.com" not in cleaned_text:  # Heuristik sederhana
+            return f"{cleaned_text}@gmail.com"  # Asumsi default, perlu disesuaikan
+        return cleaned_text
 
     if 'EMAIL' in df['entity_group'].unique():
         df.loc[df['entity_group'] == 'EMAIL', 'word'] = df.loc[df['entity_group'] == 'EMAIL', 'word'].apply(

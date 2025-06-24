@@ -1,4 +1,5 @@
 import logging
+import pprint
 
 import pandas as pd
 
@@ -45,84 +46,65 @@ def ekstrak_blok_penanda_tangan_v3(entities_input_list):  # Ganti nama fungsi ji
 
         # Hanya mulai proses jika menemukan POSITION yang belum terpakai
         if current_entity.get('entity_group') == 'POSITION':
+
+            # Langkah 1: Kumpulkan blok JABATAN
             list_jabatan_parts = []
             last_pos_idx = -1
-
-            # 1. Kumpulkan bagian-bagian untuk satu jabatan logis
             temp_j = i
-            while temp_j < len(entities_sorted) and \
-                    temp_j not in indices_terpakai_untuk_ttd and \
-                    entities_sorted[temp_j].get('entity_group') == 'POSITION':
-                # Heuristik kedekatan untuk jabatan multi-kata
-                if temp_j > i and (entities_sorted[temp_j].get('start', 0) - entities_sorted[temp_j - 1].get('end',
-                                                                                                             float('-inf'))) > 15:  # Gap yang lebih besar menandakan jabatan baru
+            while temp_j < len(entities_sorted) and entities_sorted[temp_j].get('entity_group') == 'POSITION':
+                if temp_j > i and (
+                        entities_sorted[temp_j].get('start', 0) - entities_sorted[temp_j - 1].get('end', 0)) > 15:
                     break
                 list_jabatan_parts.append(str(entities_sorted[temp_j].get('word', '')))
                 last_pos_idx = temp_j
                 temp_j += 1
 
-            if not list_jabatan_parts:  # Seharusnya tidak terjadi
-                i += 1
-                continue
-
-            # `temp_j` sekarang menunjuk ke entitas pertama setelah blok POSITION ini
-
-            # 2. Cari blok PER yang mengikuti LANGSUNG setelah blok POSITION ini
+            # Langkah 2: Kumpulkan blok NAMA
             list_nama_parts = []
             last_per_idx = -1
-            temp_p = temp_j  # Mulai dari setelah blok POSITION
+            temp_p = temp_j
+            while temp_p < len(entities_sorted) and entities_sorted[temp_p].get('entity_group') == 'PER':
+                is_first_per = (temp_p == temp_j)
+                if is_first_per and (
+                        entities_sorted[temp_p].get('start', 0) - entities_sorted[last_pos_idx].get('end', 0)) > 75:
+                    break
+                if not is_first_per and (
+                        entities_sorted[temp_p].get('start', 0) - entities_sorted[temp_p - 1].get('end', 0)) > 15:
+                    break
 
-            while temp_p < len(entities_sorted) and \
-                    temp_p not in indices_terpakai_untuk_ttd and \
-                    entities_sorted[temp_p].get('entity_group') == 'PER':
-                # Heuristik kedekatan untuk nama multi-kata
-                # Jika ini PER pertama setelah POSITION, atau PER berikutnya dekat dengan PER sebelumnya
-                is_first_per_after_position = (temp_p == temp_j)
-                is_subsequent_per_close_enough = (temp_p > temp_j) and \
-                                                 (entities_sorted[temp_p].get('start', 0) - entities_sorted[
-                                                     temp_p - 1].get('end', float('-inf'))) <= 15
+                list_nama_parts.append(str(entities_sorted[temp_p].get('word', '')))
+                last_per_idx = temp_p
+                temp_p += 1
 
-                if is_first_per_after_position or is_subsequent_per_close_enough:
-                    # Cek juga jarak dari POSITION terakhir ke PER pertama
-                    if is_first_per_after_position and \
-                            (entities_sorted[temp_p].get('start', 0) - entities_sorted[last_pos_idx].get('end', float(
-                                '-inf'))) > 30:  # Gap besar antara jabatan dan nama
-                        break  # Mungkin bukan pasangan langsung
+            # === LANGKAH 3: Logika Hibrida untuk Memproses Pasangan ===
+            if list_jabatan_parts and list_nama_parts:
 
-                    list_nama_parts.append(str(entities_sorted[temp_p].get('word', '')))
-                    last_per_idx = temp_p
-                    temp_p += 1
+                # KASUS SPESIAL: Jika jumlah jabatan sama dengan jumlah nama (untuk layout bersebelahan)
+                if len(list_jabatan_parts) == len(list_nama_parts) and len(list_jabatan_parts) > 1:
+                    for j_idx in range(len(list_jabatan_parts)):
+                        penanda_tangan_final.append({
+                            "jabatan": list_jabatan_parts[j_idx].strip(),
+                            "nama": list_nama_parts[j_idx].strip()
+                        })
+                # KASUS UMUM: Satu penanda tangan (bisa dengan jabatan/nama multi-kata)
                 else:
-                    break  # PER tidak cukup dekat, bukan bagian dari nama ini
+                    jabatan_final = " ".join(list_jabatan_parts).strip()
+                    nama_final = " ".join(list_nama_parts).strip()
+                    penanda_tangan_final.append({"jabatan": jabatan_final, "nama": nama_final})
 
-            if list_nama_parts:  # Jika pasangan Jabatan dan Nama ditemukan
-                if len(list_jabatan_parts) > 0 and len(list_nama_parts) > 0:
-                    # Jika jumlahnya sama dan > 1, coba pasangkan satu-satu
-                    if len(list_jabatan_parts) == len(list_nama_parts) and len(list_jabatan_parts) > 1:
-                        for j_idx in range(len(list_jabatan_parts)):
-                            penanda_tangan_final.append({
-                                "jabatan": list_jabatan_parts[j_idx].strip(),
-                                "nama": list_nama_parts[j_idx].strip()
-                            })
-                    else:  # Kasus umum: satu blok jabatan, satu blok nama (bisa multi-token)
-                        jabatan_final = " ".join(list_jabatan_parts).strip()
-                        nama_final = " ".join(list_nama_parts).strip()
-                        penanda_tangan_final.append({"jabatan": jabatan_final, "nama": nama_final})
+                # Tandai semua indeks sebagai terpakai
+                for k_idx in range(i, last_per_idx + 1):
+                    indices_terpakai_untuk_ttd.add(k_idx)
 
-                    for k_idx in range(i, last_per_idx + 1):
-                        indices_terpakai_untuk_ttd.add(k_idx)
-                    i = last_per_idx + 1
-                    continue
-            else:
-                # Tidak ditemukan PER yang cocok untuk blok POSITION ini
-                # Biarkan POSITION ini masuk ke sisa_entitas (tidak di-increment i secara khusus di sini)
-                pass
+                i = last_per_idx + 1
+                continue
 
-        i += 1  # Lanjut ke entitas berikutnya jika tidak ada blok ttd yang valid dimulai di i
+        # Jika bukan 'POSITION' atau tidak ditemukan pasangan, lanjut ke entitas berikutnya
+        i += 1
 
     # Kumpulkan sisa entitas
     for k_idx in range(len(entities_sorted)):
         if k_idx not in indices_terpakai_untuk_ttd:
             sisa_entitas_final.append(entities_sorted[k_idx])
 
-    return sisa_entitas_final, penanda_tangan_final
+    return penanda_tangan_final, sisa_entitas_final

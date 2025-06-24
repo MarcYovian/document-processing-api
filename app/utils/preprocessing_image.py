@@ -56,40 +56,47 @@ def preprocess_image_data(image_data, page_number=0, std_dev_threshold_logo=15.0
     cv2.imwrite(os.path.join(folder_target, "debug_0a_original_for_crop.png"), original_bgr_for_cropping)
     cv2.imwrite(os.path.join(folder_target, "debug_0b_grayscale_initial.png"), gray)
 
-    original_height, original_width = gray.shape[:2]
+    original_width, original_height = gray.shape[:2]
     print(f"Dimensi Halaman {page_number + 1} (T x L): {original_height} x {original_width} piksel.")
 
     # --- MASKING LOGO KONDISIONAL HANYA UNTUK HALAMAN PERTAMA (indeks 0) ---
     if page_number == 0:
-        # Pastikan koordinat logo sesuai dengan dimensi gambar
-        # Kita akan bekerja pada gambar 'gray' sebelum diubah ukurannya atau di-deskew secara signifikan
-        # Jika Anda melakukan scaling di awal, sesuaikan koordinat logo ini atau lakukan scaling koordinat.
         print(f"--- Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
 
-        # Cek dan Mask Logo Kiri
-        y0_L, y1_L, x0_L, x1_L = settings.LEFT_LOGO_BOX
-        y1_L = min(y1_L, original_height);
-        x1_L = min(x1_L, original_width)
+        # --- Cek dan Mask Logo Kiri (Menggunakan Koordinat Relatif) ---
+        # Ambil koordinat relatif dari settings
+        y0_rel_L, y1_rel_L, x0_rel_L, x1_rel_L = settings.LEFT_LOGO_BOX_RELATIVE
+        # Hitung koordinat absolut berdasarkan dimensi gambar saat ini
+        y0_L = int(y0_rel_L * original_height)
+        y1_L = int(y1_rel_L * original_height)
+        x0_L = int(x0_rel_L * original_width)
+        x1_L = int(x1_rel_L * original_width)
+
         if 0 <= y0_L < y1_L and 0 <= x0_L < x1_L:
             left_logo_region = gray[y0_L:y1_L, x0_L:x1_L]
             if likely_contains_content(left_logo_region, std_dev_threshold=std_dev_threshold_logo):
                 gray[y0_L:y1_L, x0_L:x1_L] = 255  # Jadikan putih (latar belakang)
+                print(f"Konten terdeteksi di area logo kiri [{y0_L}:{y1_L}, {x0_L}:{x1_L}] dan di-mask.")
 
-        # Cek dan Mask Logo Kanan
-        y0_R, y1_R, x0_R, x1_R = settings.RIGHT_LOGO_BOX
-        y1_R = min(y1_R, original_height);
-        x1_R = min(x1_R, original_width)
+        # --- Cek dan Mask Logo Kanan (Menggunakan Koordinat Relatif) ---
+        # Ambil koordinat relatif dari settings
+        y0_rel_R, y1_rel_R, x0_rel_R, x1_rel_R = settings.RIGHT_LOGO_BOX_RELATIVE
+        # Hitung koordinat absolut berdasarkan dimensi gambar saat ini
+        y0_R = int(y0_rel_R * original_height)
+        y1_R = int(y1_rel_R * original_height)
+        x0_R = int(x0_rel_R * original_width)
+        x1_R = int(x1_rel_R * original_width)
+
         if 0 <= y0_R < y1_R and 0 <= x0_R < x1_R:
             right_logo_region = gray[y0_R:y1_R, x0_R:x1_R]
             if likely_contains_content(right_logo_region, std_dev_threshold=std_dev_threshold_logo):
-                gray[y0_R:y1_R, x0_R:x1_R] = 255  # Jadikan putih (latar belakang)
+                gray[y0_R:y1_R, x0_R:x1_R] = 255
                 print(f"Konten terdeteksi di area logo kanan [{y0_R}:{y1_R}, {x0_R}:{x1_R}] dan di-mask.")
             else:
                 print(f"Tidak ada konten signifikan terdeteksi di area logo kanan.")
         else:
             print(f"Koordinat logo kanan di luar batas gambar.")
 
-        # (Opsional) Simpan gambar setelah masking logo untuk debugging
         cv2.imwrite(os.path.join(folder_target, "debug_0b_after_logo_masking.png"), gray)
     else:
         print(f"--- Tidak Menerapkan Masking Logo untuk Halaman {page_number + 1} ---")
