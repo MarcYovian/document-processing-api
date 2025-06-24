@@ -1,4 +1,6 @@
 import os
+import platform
+import shutil
 import random
 import logging
 import cv2
@@ -14,9 +16,46 @@ from app.utils.postprocessing_text import preprocess_text
 
 
 class OCRService:
-    def __init__(self, tesseract_cmd_path=None):
-        if tesseract_cmd_path:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+    def __init__(self):
+        """
+        Secara otomatis mendeteksi dan mengkonfigurasi path Tesseract saat
+        dibuat, agar bisa berjalan di Windows dan Linux.
+        """
+        tesseract_path = self._find_tesseract_path()
+
+        if tesseract_path:
+            pytesseract.tesseract_cmd = tesseract_path
+            logging.info(f"Tesseract dikonfigurasi untuk menggunakan path: {tesseract_path}")
+        else:
+            # Jika Tesseract tidak ditemukan sama sekali, lemparkan error.
+            # Ini akan menghentikan aplikasi saat startup jika dependensi penting hilang.
+            raise FileNotFoundError(
+                "Tesseract executable tidak ditemukan. "
+                "Pastikan Tesseract sudah terinstal dan ada di PATH sistem, "
+                "atau periksa path default di dalam kode OCRService."
+            )
+
+    @staticmethod
+    def _find_tesseract_path() -> str | None:
+        """Mencari path Tesseract yang valid di sistem."""
+        # Cara 1: Cari menggunakan shutil.which (paling universal, mencari di PATH)
+        found_path = shutil.which("tesseract")
+        if found_path:
+            return found_path
+
+        # Cara 2: Jika tidak ada di PATH, cek lokasi instalasi default
+        system_os = platform.system()
+        if system_os == "Windows":
+            default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+            if os.path.exists(default_path):
+                return default_path
+        elif system_os == "Linux":
+            default_path = "/usr/bin/tesseract"
+            if os.path.exists(default_path):
+                return default_path
+
+        # Jika semua cara gagal
+        return None
 
     @staticmethod
     def ocr_core(image_data, lang='ind', psm=4, oem=3, whitelist=''):
@@ -62,6 +101,7 @@ class OCRService:
 
         if file_extension == ".pdf":
             logging.info("File PDF terdeteksi. Mengonversi PDF ke gambar...")
+            print(settings.POPPLER_PATH)
             try:
                 images_from_pdf = convert_from_path(
                     file_path,

@@ -20,8 +20,7 @@ os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 if settings.DEBUG_FILE:  # Menggunakan settings yang diimpor
     os.makedirs(settings.DEBUG_FILE, exist_ok=True)
 
-ocr_processor = OCRService(tesseract_cmd_path=settings.TESSERACT_PATH)
-logging.info(settings.TESSERACT_PATH)
+ocr_processor = OCRService()
 bert_classify_service = BERTClassifyService()
 bert_ner_service = BERTNERService()
 
@@ -172,7 +171,7 @@ def classify_extract_endpoint():
                 type=predict[0]['label']
             )
             return jsonify({
-                # 'text': extracted_text,
+                'text': extracted_text,
                 "data": data
             }), 200
     except Exception as e:
