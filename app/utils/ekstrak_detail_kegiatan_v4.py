@@ -57,8 +57,6 @@ def ekstrak_detail_kegiatan_v4(entities):
         logging.error("Format input 'entities' untuk kegiatan tidak valid atau tidak memiliki 'start'.")
         return []
 
-    pprint.pprint(entities_sorted)
-
     current_event = None
     MAX_ENTITY_GAP = 150  # Jarak karakter maksimal antar entitas dalam satu blok kegiatan (bisa disesuaikan)
 
