@@ -46,6 +46,7 @@ class OCRService:
         # Cara 2: Jika tidak ada di PATH, cek lokasi instalasi default
         system_os = platform.system()
         logging.info(system_os)
+        print(system_os)
         if system_os == "Windows":
             default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
             if os.path.exists(default_path):
