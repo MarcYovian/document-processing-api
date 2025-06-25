@@ -22,7 +22,7 @@ class OCRService:
         dibuat, agar bisa berjalan di Windows dan Linux.
         """
         tesseract_path = settings.TESSERACT_PATH
-
+        print(tesseract_path)
         if tesseract_path:
             pytesseract.tesseract_cmd = tesseract_path
             logging.info(f"Tesseract dikonfigurasi untuk menggunakan path: {tesseract_path}")
