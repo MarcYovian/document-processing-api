@@ -35,8 +35,7 @@ class OCRService:
                 "atau periksa path default di dalam kode OCRService."
             )
 
-    @staticmethod
-    def _find_tesseract_path() -> str | None:
+    def _find_tesseract_path(self) -> str | None:
         """Mencari path Tesseract yang valid di sistem."""
         # Cara 1: Cari menggunakan shutil.which (paling universal, mencari di PATH)
         found_path = shutil.which("tesseract")
