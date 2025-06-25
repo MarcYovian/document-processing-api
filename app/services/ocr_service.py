@@ -21,7 +21,7 @@ class OCRService:
         Secara otomatis mendeteksi dan mengkonfigurasi path Tesseract saat
         dibuat, agar bisa berjalan di Windows dan Linux.
         """
-        tesseract_path = self._find_tesseract_path()
+        tesseract_path = settings.TESSERACT_PATH
 
         if tesseract_path:
             pytesseract.tesseract_cmd = tesseract_path
