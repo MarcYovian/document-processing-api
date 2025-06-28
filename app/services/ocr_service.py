@@ -52,10 +52,12 @@ class OCRService:
         if system_os == "Windows":
             default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
             if os.path.exists(default_path):
+                logger.info(f"path tesseract Windows : {default_path}")
                 return default_path
         elif system_os == "Linux":
             default_path = "/usr/bin/tesseract"
             if os.path.exists(default_path):
+                logger.info(f"path tesseract Linux : {default_path}")
                 return default_path
 
         # Jika semua cara gagal
