@@ -70,7 +70,7 @@ class OCRService:
         """
         if image_data is None:
             return "Error: Tidak ada data gambar untuk di-OCR."
-        logging.info("Memulai proses OCR dengan Tesseract...")
+        logger.info("Memulai proses OCR dengan Tesseract...")
         try:
             pil_image = Image.fromarray(image_data)  # Ini bisa jika formatnya tepat
 
@@ -79,17 +79,17 @@ class OCRService:
                 custom_config += f' -c tessedit_char_whitelist="{whitelist}"'
 
             text = pytesseract.image_to_string(pil_image, lang=lang, config=custom_config)
-            logging.info(f"Pytesseract config: {custom_config}")
-            logging.info("Proses OCR selesai.")
+            logger.info(f"Pytesseract config: {custom_config}")
+            logger.info("Proses OCR selesai.")
             return text
         except pytesseract.TesseractNotFoundError:
-            logging.error("Error: Tesseract tidak ditemukan. Pastikan sudah terinstal dan ada di PATH.")
+            logger.error("Error: Tesseract tidak ditemukan. Pastikan sudah terinstal dan ada di PATH.")
             return "[Error OCR: Tesseract tidak ditemukan]"
         except Exception as e:
             return f"[Error OCR: {e}]"
 
     def extract_text(self, file_path="", std_dev_threshold_logo=15.0):
-        logging.info(f"\n--- Memulai Pipeline OCR untuk: {file_path} ---")
+        logger.info(f"\n--- Memulai Pipeline OCR untuk: {file_path} ---")
         filename, file_extension = os.path.splitext(file_path)
         file_extension = file_extension.lower()
 
@@ -101,12 +101,12 @@ class OCRService:
         base_folder_for_id = os.path.join(settings.DEBUG_FILE, str(id_numerik))
         if not os.path.exists(base_folder_for_id):
             os.makedirs(base_folder_for_id)
-            logging.info(f"Folder debug utama untuk ID {id_numerik} dibuat di: {base_folder_for_id}")
+            logger.info(f"Folder debug utama untuk ID {id_numerik} dibuat di: {base_folder_for_id}")
 
         full_document_text_parts = []
 
         if file_extension == ".pdf":
-            logging.info("File PDF terdeteksi. Mengonversi PDF ke gambar...")
+            logger.info("File PDF terdeteksi. Mengonversi PDF ke gambar...")
             print(settings.POPPLER_PATH)
             try:
                 images_from_pdf = convert_from_path(
@@ -121,7 +121,7 @@ class OCRService:
                         f"poppler_path di convert_from_path.")
 
             for i, pil_image_page in enumerate(images_from_pdf):
-                logging.info(f"\nMemproses halaman PDF ke-{i + 1} dari {len(images_from_pdf)}...")
+                logger.info(f"\nMemproses halaman PDF ke-{i + 1} dari {len(images_from_pdf)}...")
                 opencv_image_page_bgr = cv2.cvtColor(np.array(pil_image_page), cv2.COLOR_RGB2BGR)
 
                 binary_page_for_ocr_and_lines, original_bgr_for_cropping = \
@@ -149,7 +149,7 @@ class OCRService:
                 if image_final_ocr_ready is None:  # Jika page_after_line_removal gagal
                     image_final_ocr_ready = binary_page_for_ocr_and_lines  # Fallback
 
-                logging.info(f"Melakukan OCR final di Halaman {i + 1}...")
+                logger.info(f"Melakukan OCR final di Halaman {i + 1}...")
                 # PSM 3 (Auto Page Segmentation) atau PSM 4 (Single Column) mungkin cocok di sini
                 # atau PSM 11 (Sparse text) jika teksnya sangat tersebar.
                 general_text_on_page = self.ocr_core(image_final_ocr_ready, psm=4, lang='ind')  # Coba PSM 3
@@ -187,7 +187,7 @@ class OCRService:
             if image_final_ocr_ready is None:  # Jika page_after_line_removal gagal
                 image_final_ocr_ready = binary_page_for_ocr_and_lines  # Fallback
 
-            logging.info(f"Melakukan OCR final pada gambar...")
+            logger.info(f"Melakukan OCR final pada gambar...")
             general_text_on_page = self.ocr_core(image_final_ocr_ready, psm=4, lang='ind')
             cleaned_general_text = preprocess_text(general_text_on_page)
 
@@ -195,5 +195,5 @@ class OCRService:
         else:
             return "Format file tidak didukung. Hanya PDF, PNG, JPG, JPEG, BMP, TIFF."
 
-        logging.info(f"--- Pipeline OCR Selesai untuk: {file_path} ---")
+        logger.info(f"--- Pipeline OCR Selesai untuk: {file_path} ---")
         return final_ocr_text.strip()
