@@ -14,6 +14,8 @@ from app.utils.preprocessing_image import preprocess_image_data
 from app.utils.preprocessing_table_data import extract_table_grid_from_page, page_after_line_removal
 from app.utils.postprocessing_text import preprocess_text
 
+logger = logging.getLogger(__name__)
+
 
 class OCRService:
     def __init__(self):
@@ -21,11 +23,10 @@ class OCRService:
         Secara otomatis mendeteksi dan mengkonfigurasi path Tesseract saat
         dibuat, agar bisa berjalan di Windows dan Linux.
         """
-        tesseract_path = settings.TESSERACT_PATH
-        print(tesseract_path)
+        tesseract_path = self._find_tesseract_path()
         if tesseract_path:
             pytesseract.tesseract_cmd = tesseract_path
-            logging.info(f"Tesseract dikonfigurasi untuk menggunakan path: {tesseract_path}")
+            logger.info(f"Tesseract dikonfigurasi untuk menggunakan path: {tesseract_path}")
         else:
             # Jika Tesseract tidak ditemukan sama sekali, lemparkan error.
             # Ini akan menghentikan aplikasi saat startup jika dependensi penting hilang.
@@ -35,16 +36,18 @@ class OCRService:
                 "atau periksa path default di dalam kode OCRService."
             )
 
-    def _find_tesseract_path(self) -> str | None:
+    @staticmethod
+    def _find_tesseract_path() -> str | None:
         """Mencari path Tesseract yang valid di sistem."""
         # Cara 1: Cari menggunakan shutil.which (paling universal, mencari di PATH)
         found_path = shutil.which("tesseract")
+        logger.info(f"path tesseract : {found_path}")
         if found_path:
             return found_path
 
         # Cara 2: Jika tidak ada di PATH, cek lokasi instalasi default
         system_os = platform.system()
-        logging.error("holla")
+        logger.info(f"platform system os : {system_os}")
         print(system_os)
         if system_os == "Windows":
             default_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"

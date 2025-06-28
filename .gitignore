@@ -16,6 +16,7 @@ __pycache__/
 # File lain yang tidak perlu
 *.log
 .DS_Store
+logs/
 
 #folder debug
 /debug
