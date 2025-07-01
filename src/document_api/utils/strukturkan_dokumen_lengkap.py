@@ -1,7 +1,7 @@
-from app.utils.basic_post_process_entities import basic_post_process_entities
-from app.utils.ekstrak_blok_penanda_tangan_v3 import ekstrak_blok_penanda_tangan_v3
-from app.utils.ekstrak_detail_kegiatan_v4 import ekstrak_detail_kegiatan_v4
-from app.utils.ekstrak_info_umum import ekstrak_info_umum
+from src.document_api.utils.basic_post_process_entities import basic_post_process_entities
+from src.document_api.utils.ekstrak_blok_penanda_tangan_v3 import ekstrak_blok_penanda_tangan_v3
+from src.document_api.utils.ekstrak_detail_kegiatan_v4 import ekstrak_detail_kegiatan_v4
+from src.document_api.utils.ekstrak_info_umum import ekstrak_info_umum
 
 
 def strukturkan_dokumen_lengkap(ner_pipeline_output_list, file_name_asli, teks_dokumen_asli, type):
@@ -22,7 +22,7 @@ def strukturkan_dokumen_lengkap(ner_pipeline_output_list, file_name_asli, teks_d
         # ... (penanganan jika tidak ada entitas setelah post-processing dasar) ...
         return {  # kembalikan struktur kosong
             "type": type,
-            "nama_file_sumber": file_name_asli,
+            "file_name": file_name_asli,
             "teks_dokumen_asli": teks_dokumen_asli,
             "informasi_umum_dokumen": {},
             "detail_kegiatan": [],
@@ -40,7 +40,7 @@ def strukturkan_dokumen_lengkap(ner_pipeline_output_list, file_name_asli, teks_d
 
     hasil_final_json = {
         "type": type,
-        "nama_file_sumber": file_name_asli,
+        "file_name": file_name_asli,
         "informasi_umum_dokumen": info_umum,
         "detail_kegiatan": detail_kegiatan,
         "blok_penanda_tangan": blok_penanda_tangan

@@ -2,7 +2,7 @@ import logging
 import re
 import pandas as pd
 
-from app.utils.cek_date_year import cek_date_year
+from src.document_api.utils.cek_date_year import cek_date_year
 
 
 def basic_post_process_entities(raw_predictions_list):

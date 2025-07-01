@@ -1,25 +1,54 @@
 # Folder Virtual Environment
-/venv
-/env
+# Mengabaikan folder venv dan env di direktori root
+/venv/
+/env/
 
 # File Environment
-/.env
+# Mengabaikan file .env yang berisi kredensial dan konfigurasi sensitif
+.env
 
-# Folder konfigurasi IDE
-/.idea
-/.vscode
+# Folder Konfigurasi IDE & Editor
+# Mencegah pengaturan spesifik developer masuk ke repositori
+/.idea/
+/.vscode/
 
-# File cache Python
+# File dan Folder Cache Python
+# Mengabaikan semua folder __pycache__ dan file .pyc secara rekursif
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# File lain yang tidak perlu
+# Artefak Build & Instalasi Python
+# Dihasilkan saat membangun atau menginstal paket
+/dist/
+/build/
+*.egg-info/
+*.egg
+
+# File Log dan Debug
+# Mengabaikan file log dan folder debug/logs di mana pun
 *.log
-.DS_Store
 logs/
+/debug/
 
-#folder debug
-/debug
+# Model Machine Learning
+# Mengabaikan folder tempat menyimpan model yang diunduh atau dilatih
+/models_store/
 
-#folder model
-/models_store
+# File Spesifik Sistem Operasi
+# Mencegah file sistem dari macOS, Windows, dan Linux masuk ke repo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# File Cache dari Alat Testing
+.pytest_cache/
+.coverage
+.coverage.*
+/htmlcov/
+nosetests.xml
+coverage.xml
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints

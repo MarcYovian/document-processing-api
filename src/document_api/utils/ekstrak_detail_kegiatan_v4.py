@@ -1,10 +1,9 @@
 import logging
-import pprint
 import re
 
 import pandas as pd
 
-from app.utils.similar import similar
+from src.document_api.utils.similar import similar
 
 
 def initialize_event_dict_v4():
