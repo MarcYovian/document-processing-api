@@ -1,8 +1,10 @@
 import logging
 import os
 import shutil
+import subprocess
+from datetime import datetime, timezone
 
-from flask import Flask
+from flask import Flask, jsonify
 
 from .api.classifier import init_classifier_services, classifier_bp
 from .api.information_extraction import init_information_services, information_bp
@@ -13,6 +15,9 @@ from .services.classifier_service import TextClassifierService
 from .services.information_extraction_service import InformationExtractionService
 from .services.ner_service import NERService
 from .services.ocr_service import OCRService
+
+
+logger = logging.getLogger(__name__)
 
 
 def find_tesseract_path() -> str | None:
@@ -30,7 +35,14 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = settings.UPLOAD_FOLDER
 
     # Konfigurasi logging bisa dipindahkan ke sini untuk sentralisasi
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    if settings.APP_ENV == 'local':
+        log_level = logging.DEBUG
+        logger.info("Aplikasi berjalan di lingkungan LOKAL, logging diatur ke DEBUG.")
+    else:
+        log_level = logging.INFO
+        logger.info(f"Aplikasi berjalan di lingkungan PRODUKSI ({settings.APP_ENV}), logging diatur ke INFO.")
+
+    logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)-8s - %(name)-25s - %(message)s')
 
     with app.app_context():
         # 1. Buat instance OCRService
@@ -72,8 +84,49 @@ def create_app():
     app.register_blueprint(ner_bp, url_prefix='/documents')
     app.register_blueprint(information_bp, url_prefix='/documents')
 
-    @app.route('/health')
+    @app.route('/health', methods=['GET'])
     def health_check():
-        return "OK", 200
+        """
+        Melakukan pengecekan kesehatan terperinci pada aplikasi dan dependensinya.
+        """
+        is_healthy = True
+        dependencies_status = {}
 
+        # 1. Cek Tesseract
+        try:
+            # Cara cepat memeriksa Tesseract adalah dengan menjalankan perintah version
+            subprocess.run([tesseract_path, "--version"], check=True, capture_output=True, text=True)
+            dependencies_status["ocr_tesseract"] = {"status": "OK"}
+        except Exception as e:
+            is_healthy = False
+            logger.error(f"Health Check Gagal: Tesseract tidak bisa dieksekusi. Error: {e}")
+            dependencies_status["ocr_tesseract"] = {"status": "UNHEALTHY", "error": str(e)}
+
+        # 2. Cek Model Klasifikasi
+        if classifier_service_instance and classifier_service_instance.classifier:
+            dependencies_status["classifier_model"] = {"status": "OK", "model": classifier_service_instance.model_name}
+        else:
+            is_healthy = False
+            logger.error("Health Check Gagal: Model klasifikasi tidak dimuat.")
+            dependencies_status["classifier_model"] = {"status": "UNHEALTHY", "model": settings.CLASSIFY_MODEL}
+
+        # 3. Cek Model NER
+        if ner_service_instance and ner_service_instance.ner_pipeline:
+            dependencies_status["ner_model"] = {"status": "OK", "model": ner_service_instance.model_name}
+        else:
+            is_healthy = False
+            logger.error("Health Check Gagal: Model NER tidak dimuat.")
+            dependencies_status["ner_model"] = {"status": "UNHEALTHY", "model": settings.NER_MODEL}
+
+        # Susun respons JSON
+        response_data = {
+            "status": "OK" if is_healthy else "UNHEALTHY",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "dependencies": dependencies_status
+        }
+
+        # Tentukan status code HTTP
+        status_code = 200 if is_healthy else 503  # 503 Service Unavailable
+
+        return jsonify(response_data), status_code
     return app

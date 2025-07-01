@@ -30,7 +30,7 @@ __pycache__/
 # Mengabaikan file log dan folder debug/logs di mana pun
 *.log
 logs/
-/debug/
+debug/
 
 # Model Machine Learning
 # Mengabaikan folder tempat menyimpan model yang diunduh atau dilatih
