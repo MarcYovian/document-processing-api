@@ -21,6 +21,7 @@ def apply_rule_based_corrections(text):
         r"\bFebruan\b": "Februari",
         r"\bSdoarjo\b": "Sidoarjo",
         r"\bKewa\b": "Ketua",
+        r"\b)NAVENTURA\b": "BONAVENTURA",
         r"\bWilah\b": "Wilayah",
         r"\bGriva\b": "Griya",
         r"\bAROKI\b": "PAROKI",
@@ -30,10 +31,15 @@ def apply_rule_based_corrections(text):
         r'\b(No|Hal|Lampiran|Perihal)\s*--\s*:-': r'\1: -',
         r'\b/II1/\b': '/III/',
         r'\b/I1/\b': '/II/',
+        r'\b/I\s*11/\b': '/III/',
         r'\b/111/\b': '/III/',
+        r'\b/V\s*111/\b': '/VIII/',
         r'\b/vii\s*1\b': '/VIII',
         r'\b/V1/\b': '/VI/',
         r'\b/V\s*11/\b': '/VI/',
+        r'\b/X\s*1/\b': '/XI/',
+        r'\b/VI\s*11/\b': '/VIII/',
+        r'\b/VI\s*1/\b': '/VII/',
         r'/\s*FEBRUARI\s*1\s*/': '/FEBRUARI/',
         r"\b\s*GPILANG\s*\b": " KARANGPILANG ",
         r"\bREJA\s*\b": " GEREJA ",
@@ -163,6 +169,8 @@ def intelligent_postprocessing(raw_ocr_text: str) -> dict:
     text = re.sub(r'([a-zA-Z])([0-9])', r'\1 \2', text)
     text = re.sub(r'([0-9])([a-zA-Z])', r'\1 \2', text)
     text = re.sub(r'(\d{2}\.\d{2})\d\b', r'\1', text)
+    text = re.sub(r'\s*--\s*', ' - ', text)
+    text = re.sub(r'\s*-\s*', ' - ', text)
 
     # 1. Pembersihan Awal (Universal)
     #    - Pisahkan teks menjadi baris-baris.

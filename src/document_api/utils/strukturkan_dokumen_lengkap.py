@@ -19,8 +19,7 @@ def strukturkan_dokumen_lengkap(ner_pipeline_output_list, file_name_asli, teks_d
 
     entities_processed_basic = basic_post_process_entities(ner_pipeline_output_list)
     if not entities_processed_basic:
-        # ... (penanganan jika tidak ada entitas setelah post-processing dasar) ...
-        return {  # kembalikan struktur kosong
+        return {
             "type": type,
             "file_name": file_name_asli,
             "teks_dokumen_asli": teks_dokumen_asli,
