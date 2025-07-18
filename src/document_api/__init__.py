@@ -129,6 +129,19 @@ def create_app():
             logger.error("Health Check Gagal: Model NER tidak dimuat.")
             dependencies_status["ner_model"] = {"status": "UNHEALTHY", "model": settings.NER_MODEL}
 
+        try:
+            is_ok, message = scan_service_instance.check_api_health()
+            if is_ok:
+                dependencies_status["scan_service_roboflow"] = {"status": "OK"}
+            else:
+                is_healthy = False
+                logger.error(f"Health Check Gagal: Roboflow API. Error: {message}")
+                dependencies_status["scan_service_roboflow"] = {"status": "UNHEALTHY", "error": message}
+        except Exception as e:
+            is_healthy = False
+            logger.error(f"Health Check Gagal: Exception saat memeriksa Roboflow API. Error: {e}")
+            dependencies_status["scan_service_roboflow"] = {"status": "UNHEALTHY", "error": str(e)}
+
         # Susun respons JSON
         response_data = {
             "status": "OK" if is_healthy else "UNHEALTHY",

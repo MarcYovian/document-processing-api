@@ -3,7 +3,9 @@
 import cv2
 import numpy as np
 from inference_sdk import InferenceHTTPClient
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
+
+import requests
 
 
 class ScanError(Exception):
@@ -15,7 +17,28 @@ class ScanService:
     def __init__(self, api_url: str, api_key: str, model_id: str):
         """Inisialisasi service dengan konfigurasi Roboflow."""
         self.model_id = model_id
-        self.client = InferenceHTTPClient(api_url=api_url, api_key=api_key)
+        self.api_key = api_key
+        self.inference_url = api_url
+        self.health_check_url = f"https://api.roboflow.com/?api_key={self.api_key}"
+        self.client = InferenceHTTPClient(api_url=self.inference_url, api_key=self.api_key)
+    
+    def check_api_health(self) -> Tuple[bool, str]:
+        """
+        Memeriksa kesehatan koneksi ke Roboflow API dengan GET request ke endpoint utama.
+        """
+        try:
+            # Lakukan GET request ringan ke endpoint utama untuk verifikasi API key.
+            response = requests.get(self.health_check_url, timeout=10)
+            response.raise_for_status()  # Akan melempar exception untuk status 4xx atau 5xx
+
+            # Cek jika response berisi informasi workspace, menandakan key valid
+            if "workspace" in response.json():
+                return True, "Koneksi dan otentikasi ke Roboflow API berhasil."
+            else:
+                return False, "API Key valid tetapi tidak ditemukan informasi workspace."
+
+        except requests.exceptions.RequestException as e:
+            return False, f"Gagal terhubung ke Roboflow API: {e}"
 
     @staticmethod
     def _order_points(pts: np.ndarray) -> np.ndarray:
