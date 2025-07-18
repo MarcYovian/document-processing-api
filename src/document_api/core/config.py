@@ -19,6 +19,9 @@ class Settings:
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'bmp', 'tiff'}
     CLASSIFY_MODEL = os.getenv("CLASSIFY_MODEL", "marcyovian/indobert-church-document-classification")
     NER_MODEL = os.getenv("NER_MODEL", "marcyovian/indobert-church-extraction-document")
+    ROBOFLOW_API_URL = os.getenv('ROBOFLOW_API_URL')
+    ROBOFLOW_API_KEY = os.getenv('ROBOFLOW_API_KEY')
+    ROBOFLOW_PROJECT_ID = os.getenv('ROBOFLOW_PROJECT_ID')
 
 
 settings = Settings()

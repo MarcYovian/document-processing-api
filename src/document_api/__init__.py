@@ -10,12 +10,13 @@ from .api.classifier import init_classifier_services, classifier_bp
 from .api.information_extraction import init_information_services, information_bp
 from .api.ner import init_ner_services, ner_bp
 from .api.ocr import ocr_bp, init_ocr_service
+from .api.scanner import init_scanner_api, scanner_bp
 from .core.config import settings
 from .services.classifier_service import TextClassifierService
 from .services.information_extraction_service import InformationExtractionService
 from .services.ner_service import NERService
 from .services.ocr_service import OCRService
-
+from .services.scan_service import ScanService
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,12 @@ def create_app():
 
         info_ext_svc_instance = InformationExtractionService()
 
+        scan_service_instance = ScanService(
+            api_url=settings.ROBOFLOW_API_URL,
+            api_key=settings.ROBOFLOW_API_KEY,
+            model_id=settings.ROBOFLOW_PROJECT_ID
+        )
+
         init_ocr_service(ocr_service_instance)
         init_classifier_services(
             ocr_svc_instance=ocr_service_instance,
@@ -77,12 +84,16 @@ def create_app():
             ner_svc_instance=ner_service_instance,
             info_ext_svc_instance=info_ext_svc_instance
         )
+        init_scanner_api(
+            service_instance=scan_service_instance
+        )
 
     # Daftarkan blueprint ke aplikasi
     app.register_blueprint(ocr_bp, url_prefix='/documents')
     app.register_blueprint(classifier_bp, url_prefix='/documents')
     app.register_blueprint(ner_bp, url_prefix='/documents')
     app.register_blueprint(information_bp, url_prefix='/documents')
+    app.register_blueprint(scanner_bp, url_prefix='/documents')
 
     @app.route('/health', methods=['GET'])
     def health_check():
